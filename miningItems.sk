@@ -1,0 +1,61 @@
+import:
+    org.bukkit.configuration.file.FileConfiguration
+    org.bukkit.configuration.file.YamlConfiguration
+    java.io.File
+    java.util.List
+    java.util.HashMap
+    java.util.Map
+    ch.njol.skript.Skript
+
+
+on load:
+    set {-data::folder} to new File(Skript.getInstance().getDataFolder(), "scripts/Items")
+    {-data::folder}.mkdirs()
+	
+function createItem(fileName:string="null", itemName:string="null", itemType:string="null", SPEED:integer=0, FORTUNE:integer=0, PRISTINE:integer=0, BREAKING_POWER:integer=0, HEALTH:integer=0, DEFENSE:integer=0):
+	set {_file} to new File({-data::folder}, "%{_fileName}%.yml")
+	set {_yml} to YamlConfiguration.loadConfiguration({_file})
+	{_yml}.load({_file})
+	
+	{_yml}.set("%{_itemName}%.name", raw "%{_itemName}%") 
+	{_yml}.set("%{_itemName}%.type", raw "%{_itemType}%")
+	
+	set {_stats} to new HashMap()
+	loop (addStats("%{_itemType}%")):
+		
+		{_stats}.put(loop-value, {_%loop-value%})
+	
+	{_stats}.put("")
+	{_yml}.set("%{_itemName}%.stats", {_stats})
+	{_yml}.save({_file})
+   
+   
+function addStats(itemType:string="null") :: strings:
+	if {_itemType} = "Drill":
+		return ("SPEED", "FORTUNE", "PRISTINE", "BREAKING_POWER")
+	else:
+		return ("SPEED", "FORTUNE", "PRISTINE", "HEALTH", "DEFENSE")
+
+function getDataFromFile(fileName:string="null", itemName:string="null", searchPrompt:string="null") :: object:
+	set {_file} to new File({-data::folder}, "%{_fileName}%.yml")
+	set {_yml} to YamlConfiguration.loadConfiguration({_file})
+	{_yml}.load({_file})
+	
+	set {_type} to {_yml}.getString("%{_itemName}%.type")
+	
+	if addStats({_type}) contains {_searchPrompt}:
+		loop ...{_yml}.getConfigurationSection("%{_itemName}%.stats").getKeys(false):	
+			return {_yml}.getInt("%{_itemName}%.stats.%loop-value%") if (loop-value = {_searchPrompt})
+	return {_yml}.getString("%{_itemName}%.%{_searchPrompt}%")
+
+
+function createFile(fileName:string="null"):
+    set {_time} to now
+
+    set {_file} to new File({-data::folder}, "%{_fileName}%.yml")
+    {_file}.createNewFile()
+
+    set {_debug} to (difference between {_time} and now)
+    broadcast "%{_debug}%"
+
+
